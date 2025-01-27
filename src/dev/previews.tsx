@@ -9,7 +9,9 @@ const ComponentPreviews = () => {
                 <PaletteTree/>
             </ComponentPreview>
             <ComponentPreview path="/RootLayout">
-                <RootLayout />
+                <RootLayout>
+                    <></>
+                </RootLayout>
             </ComponentPreview>
         </Previews>
     );
