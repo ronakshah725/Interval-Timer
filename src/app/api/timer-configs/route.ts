@@ -1,6 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { TimerConfig } from '@/lib/utils/types';
 
 export async function GET() {
   try {
@@ -15,35 +14,34 @@ export async function GET() {
     return NextResponse.json(configs);
   } catch (error) {
     console.error('Failed to fetch timers:', error);
-    return new NextResponse(
-      JSON.stringify({ message: 'Failed to fetch timers' }), 
+    return NextResponse.json(
+      { message: 'Failed to fetch timers' }, 
       { status: 500 }
     );
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const data: TimerConfig = await request.json();
+    const data = await request.json();
+    console.log('Received data:', data);  // Debug log
 
     if (data.id) {
       // Update existing timer
       try {
-        // First delete existing blocks
         await prisma.timerBlock.deleteMany({
           where: { timerConfigId: data.id }
         });
 
-        // Then update timer with new blocks
         const updatedConfig = await prisma.timerConfig.update({
           where: { id: data.id },
           data: {
             name: data.name,
             blocks: {
-              create: data.blocks.map(block => ({
+              create: data.blocks.map((block: any) => ({
                 title: block.title,
                 duration: block.duration,
-                notes: block.notes || [],
+                notes: JSON.stringify(block.notes || []),
                 color: block.color,
                 order: block.order
               }))
@@ -52,38 +50,40 @@ export async function POST(request: Request) {
           include: { blocks: true }
         });
 
+        console.log('Updated config:', updatedConfig);  // Debug log
         return NextResponse.json(updatedConfig);
       } catch (updateError) {
-        console.error('Failed to update timer:', updateError);
-        return new NextResponse(
-          JSON.stringify({ message: 'Failed to update timer' }), 
+        console.error('Update error:', updateError);  // Debug log
+        return NextResponse.json(
+          { message: 'Failed to update timer', error: updateError }, 
           { status: 500 }
         );
       }
+    } else {
+      // Create new timer
+      const newConfig = await prisma.timerConfig.create({
+        data: {
+          name: data.name,
+          blocks: {
+            create: data.blocks.map((block: any) => ({
+              title: block.title,
+              duration: block.duration,
+              notes: JSON.stringify(block.notes || []),
+              color: block.color,
+              order: block.order
+            }))
+          }
+        },
+        include: { blocks: true }
+      });
+
+      console.log('Created config:', newConfig);  // Debug log
+      return NextResponse.json(newConfig);
     }
-
-    // Create new timer
-    const newConfig = await prisma.timerConfig.create({
-      data: {
-        name: data.name,
-        blocks: {
-          create: data.blocks.map(block => ({
-            title: block.title,
-            duration: block.duration,
-            notes: block.notes || [],
-            color: block.color,
-            order: block.order
-          }))
-        }
-      },
-      include: { blocks: true }
-    });
-
-    return NextResponse.json(newConfig);
   } catch (error) {
-    console.error('Failed to process timer:', error);
-    return new NextResponse(
-      JSON.stringify({ message: 'Failed to process timer request' }), 
+    console.error('Save error:', error);  // Debug log
+    return NextResponse.json(
+      { message: 'Failed to save timer', error: String(error) }, 
       { status: 500 }
     );
   }

@@ -26,23 +26,37 @@ export default function Home() {
 
   const handleSaveTimer = async (timer: TimerConfig) => {
     try {
+      console.log('Saving timer:', timer);  // Debug log
+
       const response = await fetch('/api/timer-configs', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify(timer),
       });
 
+      console.log('Response status:', response.status);  // Debug log
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Invalid response type from server');
+      }
+
+      const data = await response.json();
+      console.log('Response data:', data);  // Debug log
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to save timer');
+        throw new Error(data.message || 'Failed to save timer');
       }
 
       setView('list');
-      router.refresh(); // Refresh the page data
+      router.refresh();
     } catch (error) {
-      console.error('Failed to save timer:', error);
+      console.error('Save error details:', error);
       // You could add a toast notification here
-
+      throw error; // Re-throw to be handled by the component
     }
   };
 
@@ -52,17 +66,20 @@ export default function Home() {
     try {
       const response = await fetch(`/api/timer-configs/${id}`, { 
         method: 'DELETE',
+        headers: {
+          'Accept': 'application/json'
+        }
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to delete timer');
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to delete timer');
       }
 
-      router.refresh(); // Refresh the page data
+      router.refresh();
     } catch (error) {
-      console.error('Failed to delete timer:', error);
-      // TODO could add a toast notification here
+      console.error('Delete error:', error);
+      // You could add a toast notification here
     }
   };
 
