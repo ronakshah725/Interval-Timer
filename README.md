@@ -2,6 +2,8 @@
 
 A customizable timer application for managing interview sessions with configurable stages.
 
+[Typescript, React, Next.js, Prisma, TailwindCSS] 
+
 ## Setup
 
 ```bash
@@ -20,3 +22,5 @@ pnpm dev
 - Dark/light mode
 - Progress tracking
 - Auto-save configurations
+- Responsive design
+
