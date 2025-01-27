@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model TimerConfig {
+  id        String       @id @default(uuid())
+  name      String
+  blocks    TimerBlock[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model TimerBlock {
+  id            String      @id @default(uuid())
+  timerConfigId String
+  title         String
+  duration      Int
+  notes         String      // JSON array of notes
+  color         String
+  order         Int
+  timerConfig   TimerConfig @relation(fields: [timerConfigId], references: [id])
+
+  @@index([timerConfigId])
+}
