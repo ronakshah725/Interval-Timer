@@ -4,7 +4,7 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Play, Edit, Trash2 } from 'lucide-react';
-import { formatTime } from '@/lib/utils';
+import { formatTime } from '@/lib/utils/time';
 
 interface SavedTimersProps {
   onSelect: (timer: any) => void;

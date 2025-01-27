@@ -1,20 +1,19 @@
 "use client"
 
 import React, {useEffect, useState} from 'react';
-import {Clock, Moon, Pause, Play, Plus, RotateCcw, Settings, Sun, X} from 'lucide-react';
+import {Clock, Moon, Pause, Play, Plus, RotateCcw, Save, Settings, Sun, X} from 'lucide-react';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
-import {useTheme} from 'next-themes';
+import {formatTime} from '@/lib/utils/time';
+import {validateBlockTitle, validateDuration} from '@/lib/utils/validation';
+import {TimerBlock, TimerConfig} from '@/lib/utils/types';
 
-type TimerBlock = {
-  id: string;
-  title: string;
-  duration: number;
-  notes: string[];
-  color: string;
-  order: number;
-};
+interface InterviewTimerProps {
+  initialTimer?: TimerConfig | null;
+  onSave: (timer: TimerConfig) => void;
+  onCancel: () => void;
+}
 
 const DEFAULT_COLORS = [
   'blue',
@@ -24,15 +23,49 @@ const DEFAULT_COLORS = [
   'pink'
 ];
 
-const InterviewTimer = () => {
-  const [blocks, setBlocks] = useState<TimerBlock[]>([]);
+const blockColors: Record<string, { light: string; dark: string }> = {
+  blue: {
+    light: 'bg-blue-500',
+    dark: 'bg-blue-400'
+  },
+  green: {
+    light: 'bg-green-500',
+    dark: 'bg-green-400'
+  },
+  yellow: {
+    light: 'bg-yellow-500',
+    dark: 'bg-yellow-400'
+  },
+  purple: {
+    light: 'bg-purple-500',
+    dark: 'bg-purple-400'
+  },
+  pink: {
+    light: 'bg-pink-500',
+    dark: 'bg-pink-400'
+  }
+};
+
+const InterviewTimer: React.FC<InterviewTimerProps> = ({ 
+  initialTimer,
+  onSave,
+  onCancel
+}) => {
+  const [blocks, setBlocks] = useState<TimerBlock[]>(initialTimer?.blocks || []);
   const [isRunning, setIsRunning] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [currentBlock, setCurrentBlock] = useState(0);
-  const [isEditing, setIsEditing] = useState(true);
-  const [timerName, setTimerName] = useState('');
+  const [isEditing, setIsEditing] = useState(!initialTimer?.blocks?.length);
+  const [timerName, setTimerName] = useState(initialTimer?.name || '');
   const [totalDuration, setTotalDuration] = useState(0);
-  const { theme, setTheme } = useTheme();
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    if (initialTimer?.blocks) {
+      setBlocks(initialTimer.blocks);
+      updateTotalDuration(initialTimer.blocks);
+    }
+  }, [initialTimer]);
 
   const updateTotalDuration = (updatedBlocks: TimerBlock[]) => {
     const total = updatedBlocks.reduce((sum, block) => sum + block.duration, 0);
@@ -42,7 +75,7 @@ const InterviewTimer = () => {
   const addBlock = () => {
     const newBlock: TimerBlock = {
       id: Date.now().toString(),
-      title: `Block ${blocks.length + 1}`,
+      title: validateBlockTitle(`Block ${blocks.length + 1}`),
       duration: 300,
       notes: [],
       color: DEFAULT_COLORS[blocks.length % DEFAULT_COLORS.length],
@@ -53,26 +86,30 @@ const InterviewTimer = () => {
     updateTotalDuration(updatedBlocks);
   };
 
-  const removeBlock = (index: number) => {
-    const updatedBlocks = blocks.filter((_, i) => i !== index)
-      .map((block, i) => ({ ...block, order: i }));
-    setBlocks(updatedBlocks);
-    updateTotalDuration(updatedBlocks);
-  };
-
   const updateBlock = (index: number, field: keyof TimerBlock, value: any) => {
     const updatedBlocks = [...blocks];
-    updatedBlocks[index] = { ...updatedBlocks[index], [field]: value };
+    let processedValue = value;
+
+    if (field === 'duration') {
+      processedValue = validateDuration(value.toString());
+    } else if (field === 'title') {
+      processedValue = validateBlockTitle(value);
+    }
+
+    updatedBlocks[index] = { ...updatedBlocks[index], [field]: processedValue };
     setBlocks(updatedBlocks);
+    
     if (field === 'duration') {
       updateTotalDuration(updatedBlocks);
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const removeBlock = (index: number) => {
+    const updatedBlocks = blocks
+      .filter((_, i) => i !== index)
+      .map((block, i) => ({ ...block, order: i }));
+    setBlocks(updatedBlocks);
+    updateTotalDuration(updatedBlocks);
   };
 
   const getBlockProgress = (blockIndex: number) => {
@@ -92,34 +129,55 @@ const InterviewTimer = () => {
     return Math.max(0, Math.min(blocks[blockIndex].duration, currentTime - startTime));
   };
 
+  const handleSave = () => {
+    const timer: TimerConfig = {
+      ...initialTimer,
+      name: timerName || 'Untitled Timer',
+      blocks: blocks.map((block, index) => ({
+        ...block,
+        order: index
+      }))
+    };
+    onSave(timer);
+  };
+
+  const toggleTheme = () => {
+    setIsDark(!isDark);
+    document.documentElement.classList.toggle('dark');
+  };
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
     
-    if (isRunning) {
+    if (isRunning && blocks.length > 0) {
       interval = setInterval(() => {
         setCurrentTime(prev => {
           const newTime = prev + 1;
           let timeSum = 0;
+          let newBlock = currentBlock;
           
-          for (let i = 0; i < blocks.length; i++) {
+          for (let i = 0; i <= currentBlock; i++) {
             timeSum += blocks[i].duration;
-            if (newTime <= timeSum) {
-              setCurrentBlock(i);
-              break;
-            }
           }
           
-          if (newTime >= timeSum) {
-            setIsRunning(false);
-            return timeSum;
+          if (newTime >= timeSum && currentBlock < blocks.length - 1) {
+            newBlock = currentBlock + 1;
+            setCurrentBlock(newBlock);
           }
+          
+          const totalTime = blocks.reduce((sum, block) => sum + block.duration, 0);
+          if (newTime >= totalTime) {
+            setIsRunning(false);
+            return totalTime;
+          }
+          
           return newTime;
         });
       }, 1000);
     }
 
     return () => clearInterval(interval);
-  }, [isRunning, blocks]);
+  }, [isRunning, blocks, currentBlock]);
 
   if (isEditing) {
     return (
@@ -135,16 +193,22 @@ const InterviewTimer = () => {
             <Button
               variant="outline"
               size="icon"
-              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+              onClick={toggleTheme}
             >
-              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              {isDark ? 
+                <Sun className="h-[1.2rem] w-[1.2rem]" /> : 
+                <Moon className="h-[1.2rem] w-[1.2rem]" />
+              }
+            </Button>
+            <Button variant="outline" onClick={onCancel}>
+              Cancel
             </Button>
             <Button 
-              onClick={() => blocks.length > 0 && setIsEditing(false)}
+              onClick={handleSave}
               disabled={blocks.length === 0}
             >
-              Start Timer
+              <Save className="w-4 h-4 mr-2" />
+              Save
             </Button>
           </div>
         </CardHeader>
@@ -161,7 +225,7 @@ const InterviewTimer = () => {
               <Card key={block.id} className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 flex-1">
-                    <div className={`w-2 h-8 rounded bg-${block.color}-500`} />
+                    <div className={`w-2 h-8 rounded ${blockColors[block.color][isDark ? 'dark' : 'light']}`} />
                     <Input
                       value={block.title}
                       onChange={(e) => updateBlock(index, 'title', e.target.value)}
@@ -174,7 +238,7 @@ const InterviewTimer = () => {
                     <Input
                       type="number"
                       value={Math.floor(block.duration / 60)}
-                      onChange={(e) => updateBlock(index, 'duration', parseInt(e.target.value) * 60)}
+                      onChange={(e) => updateBlock(index, 'duration', e.target.value)}
                       className="w-20"
                       min="1"
                     />
@@ -209,7 +273,7 @@ const InterviewTimer = () => {
     <Card className="w-full max-w-2xl">
       <CardHeader className="flex flex-row items-center justify-between">
         <div className="space-y-1">
-          <CardTitle>{timerName}</CardTitle>
+          <CardTitle>{timerName || 'Interview Timer'}</CardTitle>
           <CardDescription className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
             {formatTime(currentTime)} / {formatTime(totalDuration)}
@@ -219,10 +283,12 @@ const InterviewTimer = () => {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+            onClick={toggleTheme}
           >
-            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            {isDark ? 
+              <Sun className="h-[1.2rem] w-[1.2rem]" /> : 
+              <Moon className="h-[1.2rem] w-[1.2rem]" />
+            }
           </Button>
           <Button
             size="icon"
@@ -270,7 +336,7 @@ const InterviewTimer = () => {
                   </div>
                   <div className="relative w-full h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
                     <div
-                      className={`absolute inset-0 transition-all duration-1000 ease-linear bg-${block.color}-500 dark:bg-${block.color}-400`}
+                      className={`absolute inset-0 transition-all duration-1000 ease-linear ${blockColors[block.color][isDark ? 'dark' : 'light']}`}
                       style={{
                         width: `${progress}%`
                       }}
