@@ -6,10 +6,13 @@ import { SavedTimers } from '@/components/SavedTimers';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { TimerConfig } from '@/lib/utils/types';
+import { Header } from '@/components/Header';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const [view, setView] = useState<'list' | 'timer'>('list');
   const [selectedTimer, setSelectedTimer] = useState<TimerConfig | null>(null);
+  const router = useRouter();
 
   const handleNewTimer = () => {
     setSelectedTimer(null);
@@ -23,48 +26,82 @@ export default function Home() {
 
   const handleSaveTimer = async (timer: TimerConfig) => {
     try {
-      await fetch('/api/timer-configs', {
+      const response = await fetch('/api/timer-configs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(timer),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to save timer');
+      }
+
       setView('list');
+      router.refresh(); // Refresh the page data
     } catch (error) {
       console.error('Failed to save timer:', error);
+      // You could add a toast notification here
+
     }
   };
 
   const handleDeleteTimer = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this timer?')) return;
+
     try {
-      await fetch(`/api/timer-configs/${id}`, { method: 'DELETE' });
-      // Refresh list
-      window.location.reload();
+      const response = await fetch(`/api/timer-configs/${id}`, { 
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete timer');
+      }
+
+      router.refresh(); // Refresh the page data
     } catch (error) {
       console.error('Failed to delete timer:', error);
+      // TODO could add a toast notification here
+    }
+  };
+
+  const handleBack = () => {
+    if (confirm('Are you sure you want to go back? Any unsaved changes will be lost.')) {
+      setView('list');
+      setSelectedTimer(null);
     }
   };
 
   if (view === 'timer') {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-between p-24">
-        <InterviewTimer 
-          initialTimer={selectedTimer}
-          onSave={handleSaveTimer}
-          onCancel={() => setView('list')}
-        />
-      </main>
+      <div className="min-h-screen flex flex-col">
+        <Header showBack onBack={handleBack} />
+        <main className="flex-1 container mx-auto px-4 py-8 flex flex-col items-center">
+          <InterviewTimer 
+            initialTimer={selectedTimer}
+            onSave={handleSaveTimer}
+            onCancel={handleBack}
+          />
+        </main>
+      </div>
     );
   }
 
   return (
-    <main className="container mx-auto p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Interview Timers</h1>
-        <Button onClick={handleNewTimer} className="flex items-center gap-2">
-          <Plus className="w-4 h-4" /> New Timer
-        </Button>
-      </div>
-      <SavedTimers onSelect={handleSelectTimer} onDelete={handleDeleteTimer} />
-    </main>
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-1 container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+            My Timers
+          </h1>
+          <Button onClick={handleNewTimer} className="flex items-center gap-2">
+            <Plus className="w-4 h-4" /> New Timer
+          </Button>
+        </div>
+        <SavedTimers onSelect={handleSelectTimer} onDelete={handleDeleteTimer} />
+      </main>
+    </div>
   );
 }
