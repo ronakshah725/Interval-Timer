@@ -1,0 +1,21 @@
+{
+  "extends": [
+    "next/core-web-vitals",
+    "plugin:@typescript-eslint/recommended",
+    "prettier"
+  ],
+  "rules": {
+    // Critical Rules - Always enforce
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-unused-vars": "error",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn"
+
+    // Best Practices - Warn but don't break build
+//    "@typescript-eslint/explicit-function-return-type": "warn",
+//    "prefer-const": "warn",
+
+    // Style - Optional but recommended
+//    "no-console": ["warn", { "allow": ["error", "warn"] }]
+  }
+}

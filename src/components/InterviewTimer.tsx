@@ -86,21 +86,23 @@ const InterviewTimer: React.FC<InterviewTimerProps> = ({
     updateTotalDuration(updatedBlocks);
   };
 
-  const updateBlock = (index: number, field: keyof TimerBlock, value: any) => {
+  const updateBlock = (index: number, field: keyof TimerBlock, value: string) => {
     const updatedBlocks = [...blocks];
-    let processedValue = value;
+    let processedValue: string | number | undefined;
 
     if (field === 'duration') {
-      processedValue = validateDuration(value.toString());
+      processedValue = validateDuration(value);
     } else if (field === 'title') {
       processedValue = validateBlockTitle(value);
     }
 
-    updatedBlocks[index] = { ...updatedBlocks[index], [field]: processedValue };
-    setBlocks(updatedBlocks);
-    
-    if (field === 'duration') {
-      updateTotalDuration(updatedBlocks);
+    if (processedValue !== undefined) {
+      updatedBlocks[index] = { ...updatedBlocks[index], [field]: processedValue };
+      setBlocks(updatedBlocks);
+
+      if (field === 'duration') {
+        updateTotalDuration(updatedBlocks);
+      }
     }
   };
 

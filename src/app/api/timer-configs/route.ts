@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { TimerBlock } from "@/lib/utils/types";
 
 export async function GET() {
   try {
@@ -24,7 +25,6 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
-    console.log('Received data:', data);  // Debug log
 
     if (data.id) {
       // Update existing timer
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
           data: {
             name: data.name,
             blocks: {
-              create: data.blocks.map((block: any) => ({
+              create: data.blocks.map((block: TimerBlock) => ({
                 title: block.title,
                 duration: block.duration,
                 notes: JSON.stringify(block.notes || []),
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
         data: {
           name: data.name,
           blocks: {
-            create: data.blocks.map((block: any) => ({
+            create: data.blocks.map((block: TimerBlock) => ({
               title: block.title,
               duration: block.duration,
               notes: JSON.stringify(block.notes || []),
