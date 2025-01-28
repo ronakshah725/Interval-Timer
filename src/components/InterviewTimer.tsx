@@ -204,6 +204,14 @@ const InterviewTimer: React.FC<InterviewTimerProps> = ({
               Cancel
             </Button>
             <Button 
+              variant="outline"
+              onClick={() => setIsEditing(false)}
+              disabled={blocks.length === 0}
+            >
+              <Play className="w-4 h-4 mr-2" />
+              Start
+            </Button>
+            <Button 
               onClick={handleSave}
               disabled={blocks.length === 0}
             >
