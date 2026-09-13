@@ -15,7 +15,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return NextResponse.json({ error: 'Failed to delete timer' }, { status: 500 });
   }
 }
