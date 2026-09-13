@@ -26,8 +26,6 @@ export default function Home() {
 
   const handleSaveTimer = async (timer: TimerConfig) => {
     try {
-      console.log('Saving timer:', timer);  // Debug log
-
       const response = await fetch('/api/timer-configs', {
         method: 'POST',
         headers: { 
@@ -37,15 +35,12 @@ export default function Home() {
         body: JSON.stringify(timer),
       });
 
-      console.log('Response status:', response.status);  // Debug log
-
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         throw new Error('Invalid response type from server');
       }
 
       const data = await response.json();
-      console.log('Response data:', data);  // Debug log
 
       if (!response.ok) {
         throw new Error(data.message || 'Failed to save timer');

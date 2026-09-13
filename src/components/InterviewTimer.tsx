@@ -1,6 +1,7 @@
 "use client"
 
 import React, {useEffect, useState} from 'react';
+import { useTheme } from 'next-themes';
 import {Clock, Moon, Pause, Play, Plus, RotateCcw, Save, Settings, Sun, X} from 'lucide-react';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import {Button} from '@/components/ui/button';
@@ -58,7 +59,8 @@ const InterviewTimer: React.FC<InterviewTimerProps> = ({
   const [isEditing, setIsEditing] = useState(!initialTimer?.blocks?.length);
   const [timerName, setTimerName] = useState(initialTimer?.name || '');
   const [totalDuration, setTotalDuration] = useState(0);
-  const [isDark, setIsDark] = useState(false);
+  const { resolvedTheme, setTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
 
   useEffect(() => {
     if (initialTimer?.blocks) {
@@ -144,8 +146,7 @@ const InterviewTimer: React.FC<InterviewTimerProps> = ({
   };
 
   const toggleTheme = () => {
-    setIsDark(!isDark);
-    document.documentElement.classList.toggle('dark');
+    setTheme(isDark ? 'light' : 'dark');
   };
 
   useEffect(() => {

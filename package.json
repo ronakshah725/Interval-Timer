@@ -1,49 +1,41 @@
 {
-  "name": "interview-timer",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "prisma generate && next build",
-    "postinstall": "prisma generate",
-    "start": "next start",
-    "lint": "next lint",
-    "lint:fix": "next lint --fix",
-    "prepare": "husky install"
-  },
   "dependencies": {
-    "@prisma/client": "^6.2.1",
+    "@prisma/client": "^7.0.0",
     "@radix-ui/react-slot": "^1.1.1",
-    "@react-buddy/ide-toolbox-next": "^2.4.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-react": "^0.309.0",
-    "next": "^15",
-    "next-themes": "^0.2.1",
-    "react": "^18",
-    "react-dom": "^18",
+    "lucide-react": "^0.460.0",
+    "next": "^16.0.0",
+    "next-themes": "^0.4.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
     "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "@typescript-eslint/eslint-plugin": "^8.22.0",
-    "@typescript-eslint/parser": "^8.22.0",
-    "autoprefixer": "^10.0.1",
-    "eslint": "^8",
-    "eslint-config-next": "14.0.4",
-    "eslint-config-prettier": "^10.0.1",
-    "husky": "^9.1.7",
-    "lint-staged": "^15.4.3",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "postcss": "^8",
     "prettier": "^3.4.2",
-    "prisma": "^6.2.1",
-    "tailwindcss": "^3.3.0",
-    "tailwindcss-animate": "^1.0.7",
+    "prisma": "^7.0.0",
+    "tailwindcss": "^4.0.0",
     "typescript": "^5"
   },
-  "lint-staged": {
-    "**/*.{ts,tsx}": "next lint --fix --file"
+  "name": "interview-timer",
+  "private": true,
+  "scripts": {
+    "build": "prisma generate && next build",
+    "dev": "next dev",
+    "postinstall": "prisma generate",
+    "start": "next start"
+  },
+  "version": "0.1.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "prisma"
+    ]
   }
 }

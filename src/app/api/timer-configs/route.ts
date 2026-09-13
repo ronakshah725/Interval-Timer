@@ -50,7 +50,6 @@ export async function POST(request: NextRequest) {
           include: { blocks: true }
         });
 
-        console.log('Updated config:', updatedConfig);  // Debug log
         return NextResponse.json(updatedConfig);
       } catch (updateError) {
         console.error('Update error:', updateError);  // Debug log
@@ -77,7 +76,6 @@ export async function POST(request: NextRequest) {
         include: { blocks: true }
       });
 
-      console.log('Created config:', newConfig);  // Debug log
       return NextResponse.json(newConfig);
     }
   } catch (error) {
