@@ -1,14 +1,13 @@
-"use client"
 
 import React, {useEffect, useState} from 'react';
 import { useTheme } from 'next-themes';
 import {Clock, Moon, Pause, Play, Plus, RotateCcw, Save, Settings, Sun, X} from 'lucide-react';
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
-import {Button} from '@/components/ui/button';
-import {Input} from '@/components/ui/input';
-import {formatTime} from '@/lib/utils/time';
-import {validateBlockTitle, validateDuration} from '@/lib/utils/validation';
-import {TimerBlock, TimerConfig} from '@/lib/utils/types';
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '~/components/ui/card';
+import {Button} from '~/components/ui/button';
+import {Input} from '~/components/ui/input';
+import {formatTime} from '~/lib/utils/time';
+import {validateBlockTitle, validateDuration} from '~/lib/utils/validation';
+import {TimerBlock, TimerConfig} from '~/lib/utils/types';
 
 interface InterviewTimerProps {
   initialTimer?: TimerConfig | null;

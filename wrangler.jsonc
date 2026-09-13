@@ -1,0 +1,9 @@
+{
+  "name": "interval-timer",
+  "compatibility_date": "2026-09-13",
+  "compatibility_flags": ["nodejs_compat"],
+  // TanStack Start's Worker entry point (resolved by @cloudflare/vite-plugin).
+  "main": "@tanstack/react-start/server-entry",
+  // Secrets — set with `wrangler secret put <NAME>`, never commit values here:
+  //   POSTGRES_PRISMA_URL — Neon pooled connection string (required at runtime)
+}

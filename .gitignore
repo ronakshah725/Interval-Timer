@@ -2,17 +2,18 @@
 /node_modules
 /.pnp
 .pnp.js
-/.idea
 
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
+# builds
+/.output
 /build
+/dist
+
+# tanstack start generated
+src/routeTree.gen.ts
+
+# cloudflare
+.wrangler
+.dev.vars
 
 # misc
 .DS_Store
@@ -33,4 +34,3 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
