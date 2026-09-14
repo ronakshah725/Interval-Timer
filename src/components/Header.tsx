@@ -1,4 +1,3 @@
-"use client"
 
 import { ChevronLeft, Timer } from 'lucide-react';
 import { Button } from './ui/button';

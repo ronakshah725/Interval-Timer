@@ -1,14 +1,14 @@
-"use client"
 
 import React, {useEffect, useState} from 'react';
 import { useTheme } from 'next-themes';
 import {Clock, Moon, Pause, Play, Plus, RotateCcw, Save, Settings, Sun, X} from 'lucide-react';
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
-import {Button} from '@/components/ui/button';
-import {Input} from '@/components/ui/input';
-import {formatTime} from '@/lib/utils/time';
-import {validateBlockTitle, validateDuration} from '@/lib/utils/validation';
-import {TimerBlock, TimerConfig} from '@/lib/utils/types';
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '~/components/ui/card';
+import {Button} from '~/components/ui/button';
+import {Input} from '~/components/ui/input';
+import {formatTime} from '~/lib/utils/time';
+import {validateBlockTitle, validateDuration} from '~/lib/utils/validation';
+import {TimerBlock, TimerConfig} from '~/lib/utils/types';
+import {advanceTimer} from '~/lib/utils/timerEngine';
 
 interface InterviewTimerProps {
   initialTimer?: TimerConfig | null;
@@ -155,26 +155,10 @@ const InterviewTimer: React.FC<InterviewTimerProps> = ({
     if (isRunning && blocks.length > 0) {
       interval = setInterval(() => {
         setCurrentTime(prev => {
-          const newTime = prev + 1;
-          let timeSum = 0;
-          let newBlock = currentBlock;
-          
-          for (let i = 0; i <= currentBlock; i++) {
-            timeSum += blocks[i].duration;
-          }
-          
-          if (newTime >= timeSum && currentBlock < blocks.length - 1) {
-            newBlock = currentBlock + 1;
-            setCurrentBlock(newBlock);
-          }
-          
-          const totalTime = blocks.reduce((sum, block) => sum + block.duration, 0);
-          if (newTime >= totalTime) {
-            setIsRunning(false);
-            return totalTime;
-          }
-          
-          return newTime;
+          const { time, block, finished } = advanceTimer(blocks, prev, currentBlock);
+          if (block !== currentBlock) setCurrentBlock(block);
+          if (finished) setIsRunning(false);
+          return time;
         });
       }, 1000);
     }
