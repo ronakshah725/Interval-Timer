@@ -61,51 +61,74 @@ function toBlockCreate(block: TimerBlock) {
   }
 }
 
-export const listTimersFn = createServerFn({ method: 'GET' }).handler(
-  async () => {
-    const configs = await getPrisma().timerConfig.findMany(blocksWithOrder)
-    return configs.map(toClientTimer)
-  },
-)
-
-export const saveTimerFn = createServerFn({ method: 'POST' })
-  .validator((data: TimerConfig) => data)
-  .handler(async ({ data }) => {
-    const prisma = getPrisma()
-
-    if (data.id) {
-      // Update: replace blocks, then update the config (same as before).
-      await prisma.timerBlock.deleteMany({
-        where: { timerConfigId: data.id },
-      })
-      const updated = await prisma.timerConfig.update({
-        where: { id: data.id },
-        data: {
-          name: data.name,
-          blocks: { create: data.blocks.map(toBlockCreate) },
-        },
-        ...blocksWithOrder,
-      })
-      return toClientTimer(updated)
+/** Reject bad input before touching the DB. Throws on violation. */
+export function assertValidTimer(data: TimerConfig): void {
+  if (!data.blocks || data.blocks.length === 0) {
+    throw new Error('Timer must have at least one block')
+  }
+  for (const block of data.blocks) {
+    if (!Number.isFinite(block.duration) || block.duration <= 0) {
+      throw new Error(
+        `Block "${block.title}" must have a positive duration`,
+      )
     }
+  }
+}
 
-    const created = await prisma.timerConfig.create({
+// Plain data operations, exported for testing. The createServerFn wrappers
+// below are thin delegations; all logic (validation, mapping) lives here.
+export async function listTimers(): Promise<TimerConfig[]> {
+  const configs = await getPrisma().timerConfig.findMany(blocksWithOrder)
+  return configs.map(toClientTimer)
+}
+
+export async function saveTimer(data: TimerConfig): Promise<TimerConfig> {
+  assertValidTimer(data)
+  const prisma = getPrisma()
+
+  if (data.id) {
+    // Update: replace blocks, then update the config (same as before).
+    await prisma.timerBlock.deleteMany({
+      where: { timerConfigId: data.id },
+    })
+    const updated = await prisma.timerConfig.update({
+      where: { id: data.id },
       data: {
         name: data.name,
         blocks: { create: data.blocks.map(toBlockCreate) },
       },
       ...blocksWithOrder,
     })
-    return toClientTimer(created)
+    return toClientTimer(updated)
+  }
+
+  const created = await prisma.timerConfig.create({
+    data: {
+      name: data.name,
+      blocks: { create: data.blocks.map(toBlockCreate) },
+    },
+    ...blocksWithOrder,
   })
+  return toClientTimer(created)
+}
+
+export async function deleteTimer(id: string): Promise<{ success: boolean }> {
+  const prisma = getPrisma()
+  await prisma.timerBlock.deleteMany({
+    where: { timerConfigId: id },
+  })
+  await prisma.timerConfig.delete({ where: { id } })
+  return { success: true }
+}
+
+export const listTimersFn = createServerFn({ method: 'GET' }).handler(() =>
+  listTimers(),
+)
+
+export const saveTimerFn = createServerFn({ method: 'POST' })
+  .validator((data: TimerConfig) => data)
+  .handler(async ({ data }) => saveTimer(data))
 
 export const deleteTimerFn = createServerFn({ method: 'POST' })
   .validator((data: { id: string }) => data)
-  .handler(async ({ data }) => {
-    const prisma = getPrisma()
-    await prisma.timerBlock.deleteMany({
-      where: { timerConfigId: data.id },
-    })
-    await prisma.timerConfig.delete({ where: { id: data.id } })
-    return { success: true }
-  })
+  .handler(async ({ data }) => deleteTimer(data.id))
